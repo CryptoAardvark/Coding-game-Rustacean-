@@ -3,50 +3,50 @@ use std::io::{self, BufRead};
 
 #[derive(Default, Clone)]
 struct Node {
-    links: HashSet<usize>,
-    gateway: bool,
-    links2gw: HashSet<usize>,
+  links: HashSet<usize>,
+  gateway: bool,
+  tgwlinks: HashSet<usize>,
 }
 
 fn bfs(graph: &mut Vec<Node>, s: usize) -> (usize, usize) {
-    let mut visited = vec![false; graph.len()];
-    let mut q = VecDeque::new();
-    q.push_back(s);
-    visited[s] = true;
+  let mut visited = vec![false; graph.len()];
+  let mut q = VecDeque::new();
+  q.push_back(s);
+  visited[s] = true;
 
-    let mut selected_node = None;
+  let mut selected_node = None;
 
-    while let Some(id) = q.pop_front() {
-        let n = &graph[id];
-        visited[id] = true;
+  while let Some(id) = q.pop_front() {
+    let n = &graph[id];
+    visited[id] = true;
 
-        let mut push_neighbours = || {
-            for &nid in &n.links {
-                if !visited[nid] {
-                    q.push_back(nid);
-                }
-            }
-        };
-
-        if n.links2gw.len() > 1 {
-            selected_node = Some(id);
-            break;
-        } else if n.links2gw.len() == 1 {
-            if selected_node.is_none() {
-                selected_node = Some(id);
-                eprintln!(" selectedNode: {}", id);
-                if id == s {
-                    break;
-                }
-            }
-            push_neighbours();
-        } else if selected_node.is_none() {
-            push_neighbours();
+    let mut push_neighbours = || {
+      for &nid in &n.links {
+        if !visited[nid] {
+          q.push_back(nid);
         }
-    }
+      }
+    };
 
-    let selected_node = selected_node.unwrap();
-    (selected_node, *graph[selected_node].links2gw.iter().next().unwrap())
+    if n.tgwlinks.len() > 1 {
+      selected_node = Some(id);
+      break;
+    } else if n.tgwlinks.len() == 1 {
+      if selected_node.is_none() {
+        selected_node = Some(id);
+        eprint!("selectedNode: {}\n", id);
+        if id == s {
+          break;
+        }
+      }
+      push_neighbours();
+    } else if selected_node.is_none() {
+      push_neighbours();
+    }
+  }
+
+  let selected_node = selected_node.unwrap();
+  (selected_node, *graph[selected_node].tgwlinks.iter().next().unwrap())
 }
 
 fn main() {
@@ -81,7 +81,7 @@ fn main() {
     for &ei in &gateways {
         let links: Vec<usize> = graph[ei].links.iter().cloned().collect();
         for nid in links {
-            graph[nid].links2gw.insert(ei);
+            graph[nid].tgwlinks.insert(ei);
         }
     }
 
@@ -93,8 +93,10 @@ fn main() {
         println!("{} {}", node, gateway);
 
         // Cut link:
-        graph[node].links2gw.remove(&gateway);
+        graph[node].tgwlinks.remove(&gateway);
         graph[node].links.remove(&gateway);
         graph[gateway].links.remove(&node);
     }
+
+
 }
